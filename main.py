@@ -85,3 +85,74 @@ for epoch in range(2):
             running_loss = 0.0
 
 print('Finished Training')
+
+##
+PATH = './cifar_net.pth'
+torch.save(net.state_dict(), PATH)
+
+##
+dataiter = iter(testloader)
+images, labels = dataiter.next()
+
+imshow(torchvision.utils.make_grid(images))
+print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
+
+##
+PATH = './cifar_net.pth'
+net = Net()
+net.load_state_dict(torch.load(PATH))
+
+##
+outputs = net(images)
+
+##
+_, predicted = torch.max(outputs, 1)
+
+print('Predicted: ', ' '.join('%5s' % classes[predicted[j]] for j in range(4)))
+
+##
+correct = 0
+total = 0
+
+with torch.no_grad():
+    for data in testloader:
+        images, labels = data
+        outputs = net(images)
+        _, predicted = torch.max(outputs.data, 1) #return values, indexs
+        total += labels.size(0)
+        # if predicted == labels : True(1) ? False(0) -> ex) [1, 0, 1, 0] | sum -> tensor(2) | .item() -> 2
+        correct += (predicted == labels).sum().item()
+
+print('Accuracy of the network on the 10000 test images: %d %%' % (100 * correct / total))
+
+
+##
+correct_pred = {classname: 0 for classname in classes}
+total_pred = {classname: 0 for classname in classes}
+
+with torch.no_grad():
+    for data in testloader:
+        images, labels = data
+        outputs = net(images)
+        _, predictions = torch.max(outputs, 1)
+
+        for label, prediction in zip(labels, predictions):
+            if label == prediction:
+                correct_pred[classes[label]] += 1
+            total_pred[classes[label]] += 1
+
+for classname, correct_count in correct_pred.items():
+    accuracy = 100 * float(correct_count) / total_pred[classname]
+    print("Accuracy for class {:5s} is: {:.1f} %".format(classname, accuracy))
+
+##
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+print(device)
+
+##
+net.to(device)
+
+##
+inputs, labels = data[0].to(device), data[1].to(device)
+
