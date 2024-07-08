@@ -103,6 +103,15 @@ net = Net()
 net.load_state_dict(torch.load(PATH))
 
 ##
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+print(device)
+
+
+##
+net.to(device)
+
+##
 outputs = net(images)
 
 ##
@@ -116,7 +125,8 @@ total = 0
 
 with torch.no_grad():
     for data in testloader:
-        images, labels = data
+        
+        inputs, labels = data[0].to(device), data[1].to(device)
         outputs = net(images)
         _, predicted = torch.max(outputs.data, 1) #return values, indexs
         total += labels.size(0)
@@ -145,14 +155,4 @@ for classname, correct_count in correct_pred.items():
     accuracy = 100 * float(correct_count) / total_pred[classname]
     print("Accuracy for class {:5s} is: {:.1f} %".format(classname, accuracy))
 
-##
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-print(device)
-
-##
-net.to(device)
-
-##
-inputs, labels = data[0].to(device), data[1].to(device)
 
